@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import evt_linha, iniciais with context %}
+{% block content %}
+<div class="stat-grid">
+  <div class="stat-card"><div class="k">Usuários ativos</div><div class="v">{{ ind.usuarios_ativos }}</div><div class="d up">+{{ ind.novos_semana }} esta semana</div></div>
+  <div class="stat-card"><div class="k">Visitas hoje</div><div class="v">{{ ind.visitas_hoje }}</div><div class="d flat">{{ ind.visitas_andamento|length }} em andamento</div></div>
+  <div class="stat-card"><div class="k">Dispositivos online</div><div class="v">{{ ind.disp_online }}/{{ ind.disp_total }}</div>
+    <div class="d flat">{% if ind.disp_offline %}{{ ind.disp_offline|join(', ') }} offline{% else %}Todos online{% endif %}</div></div>
+  <div class="stat-card"><div class="k">Acessos hoje</div><div class="v">{{ ind.acessos_hoje }}</div>
+    <div class="d {{ 'up' if ind.variacao is not none and ind.variacao >= 0 else 'flat' }}">{% if ind.variacao is none %}Sem dados de ontem{% else %}{{ '%+d'|format(ind.variacao) }}% vs. ontem{% endif %}</div></div>
+</div>
+<div class="grid-2">
+  <div class="panel">
+    <div class="panel-head"><h3>Últimos acessos</h3><a class="link" href="{{ url_for('monitoramento') }}">Ver monitoramento →</a></div>
+    {% for e in ultimos %}{{ evt_linha(e) }}{% else %}<div class="field-hint">Nenhum acesso registrado ainda.</div>{% endfor %}
+  </div>
+  <div>
+    <div class="panel">
+      <div class="panel-head"><h3>Status das catracas</h3><a class="link" href="{{ url_for('dispositivos') }}">Ver todas →</a></div>
+      {% for d in dispositivos %}<div class="dev-row"><span class="dot {{ 'on' if d.online else 'off' }}"></span><span class="n">{{ d.nome }}</span><span class="s">{{ 'Online' if d.online else 'Offline' }}</span></div>{% endfor %}
+    </div>
+    <div class="panel" style="margin-bottom:0">
+      <div class="panel-head"><h3>Visitas em andamento</h3></div>
+      {% for v in ind.visitas_andamento %}
+      <div class="evt"><div class="evt-avatar">{{ iniciais(v.nome) }}</div>
+        <div class="evt-body"><div class="n">{{ v.nome }}</div><div class="m">Anfitrião: {{ v.anfitriao.nome }} · até {{ v.valido_ate.strftime('%d/%m %H:%M') }}</div></div></div>
+      {% else %}<div class="field-hint">Nenhuma visita em andamento no momento.</div>{% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

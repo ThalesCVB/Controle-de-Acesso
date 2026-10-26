@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ titulo or 'Controle de Acesso' }} — CVBMG</title>
+<link rel="icon" href="{{ url_for('static', filename='logo.webp') }}">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% macro nav(endpoint, label, icon, prefix=None) %}
+  <a class="nav-item {{ 'active' if (request.path == url_for(endpoint) or (endpoint != 'home' and request.path.startswith(url_for(endpoint)))) else '' }}" href="{{ url_for(endpoint) }}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">{{ icon|safe }}</svg><span>{{ label }}</span>
+  </a>
+{% endmacro %}
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <img src="{{ url_for('static', filename='logo.webp') }}" alt="CVBMG">
+    <div class="txt"><b>Controle de Acesso</b></div>
+  </div>
+  <nav>
+    {% if op.eh_ti %}
+    <div class="nav-label">Painel</div>
+    {{ nav('home','Dashboard','<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>', '/__home') }}
+    {{ nav('monitoramento','Monitoramento','<path d="M3 12h4l2-7 4 14 2-7h6"/>') }}
+    {% endif %}
+    <div class="nav-label">Cadastros</div>
+    {{ nav('usuarios','Usuários','<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>') }}
+    {{ nav('visitantes','Visitantes','<circle cx="9" cy="9" r="3.2"/><path d="M3 20c0-3.5 2.7-6.2 6-6.2s6 2.7 6 6.2"/><path d="M16 8h5M18.5 5.5v5"/>') }}
+    {% if op.eh_ti %}
+    {{ nav('grupos','Grupos','<rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/>') }}
+    <div class="nav-label">Infraestrutura</div>
+    {{ nav('dispositivos','Dispositivos','<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 18h6"/>') }}
+    {% endif %}
+    {{ nav('relatorios','Relatórios','<path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M14 3v6h6"/>') }}
+    {% if op.eh_ti %}
+    {{ nav('operadores','Operadores','<circle cx="12" cy="8" r="4"/><path d="M5 21c0-4 3-6 7-6s7 2 7 6"/>') }}
+    {% endif %}
+  </nav>
+  <div class="sidebar-foot">
+    <div class="op-avatar">{{ op.nome[:1]|upper }}</div>
+    <div class="op-meta"><b>{{ op.nome }}</b><span>{{ 'TI' if op.eh_ti else 'PORTARIA' }}</span></div>
+    <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="logout-btn">Sair</button></form>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div><h1>{{ titulo }}</h1><div class="sub">{{ sub }}</div></div>
+    {% if op.eh_ti %}
+    <form method="post" action="{{ url_for('emergencia') }}" onsubmit="return confirm('Liberar TODAS as catracas agora?')">
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <button class="emergency-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9L2.7 17.5A1.8 1.8 0 004.3 20h15.4a1.8 1.8 0 001.6-2.6L13.7 3.9a1.8 1.8 0 00-3.4 0z"/></svg>Liberação de emergência</button>
+    </form>
+    {% endif %}
+  </div>
+  <div class="content">
+    {% with msgs = get_flashed_messages(with_categories=true) %}{% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}{% endwith %}
+    {% block content %}{% endblock %}
+  </div>
+</div>
+{% block scripts %}{% endblock %}
+</body>
+</html>

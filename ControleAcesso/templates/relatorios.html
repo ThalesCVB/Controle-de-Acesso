@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import iniciais, tag with context %}
+{% block content %}
+<form method="get" class="panel" id="repForm">
+  <input type="hidden" name="gerar" value="1">
+  <div class="panel-head"><h3>Gerar relatório de acessos</h3></div>
+  <div class="field-grid">
+    <div class="field"><label>Período — de</label><input type="date" name="de" value="{{ a.get('de', '') }}"></div>
+    <div class="field"><label>Período — até</label><input type="date" name="ate" value="{{ a.get('ate', '') }}"></div>
+    <div class="field"><label>Usuário / Visitante</label><input name="quem" placeholder="Todos" value="{{ a.get('quem', '') }}"></div>
+    <div class="field"><label>Dispositivo</label>
+      <select name="dispositivo"><option value="">Todos os dispositivos</option>
+        {% for d in dispositivos %}<option value="{{ d.id }}" {{ 'selected' if a.get('dispositivo') == d.id|string }}>{{ d.nome }}</option>{% endfor %}</select></div>
+    <div class="field"><label>Resultado</label>
+      <select name="resultado"><option value="">Todos</option>
+        <option value="permitido" {{ 'selected' if a.get('resultado') == 'permitido' }}>Permitido</option>
+        <option value="negado" {{ 'selected' if a.get('resultado') == 'negado' }}>Negado</option></select></div>
+  </div>
+  <footer class="form-actions" style="justify-content:flex-start">
+    <button class="btn" name="formato" value="html">Gerar relatório</button>
+    {% if gerar %}<button class="btn secondary" name="formato" value="csv">Exportar CSV</button>
+    <button class="btn secondary" name="formato" value="pdf">Exportar PDF</button>{% endif %}
+  </footer>
+</form>
+
+{% if not gerar %}
+<div class="empty"><div>Defina os filtros e clique em "Gerar relatório" para visualizar os acessos aqui.</div></div>
+{% else %}
+<div class="panel" style="margin-bottom:0">
+  <div class="panel-head"><h3>Resultado do relatório ({{ total }} registro{{ '' if total == 1 else 's' }}{% if total > eventos|length %}, mostrando {{ eventos|length }} — exporte para ver todos{% endif %})</h3></div>
+  <table>
+    <thead><tr><th>Pessoa</th><th>Tipo</th><th>Dispositivo</th><th>Sentido</th><th>Resultado</th><th>Horário</th></tr></thead>
+    <tbody>
+      {% for e in eventos %}
+      <tr><td><div class="row-user"><div class="ph">{{ iniciais(e.pessoa_nome) }}</div>{{ e.pessoa_nome }}</div></td>
+        <td>{{ e.tipo_label }}</td><td>{{ e.dispositivo.nome }}</td><td>{{ e.sentido }}</td>
+        <td>{{ tag(e.permitido) }}{% if e.motivo and not e.permitido %}<div class="evt-motivo">{{ e.motivo }}</div>{% endif %}</td>
+        <td>{{ e.quando.strftime('%d/%m/%Y %H:%M:%S') }}</td></tr>
+      {% else %}<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:24px">Nenhum acesso encontrado para os filtros selecionados.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

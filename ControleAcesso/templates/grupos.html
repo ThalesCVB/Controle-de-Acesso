@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import post_btn with context %}
+{% block content %}
+<div class="toolbar"><span></span><a class="btn" href="{{ url_for('grupo_form') }}">+ Novo grupo</a></div>
+<div class="panel" style="margin-bottom:0">
+  <table>
+    <thead><tr><th>Grupo</th><th>Membros</th><th>Zona de horário</th><th>Dispositivos liberados</th><th></th></tr></thead>
+    <tbody>
+      {% for g in lista %}
+      <tr><td><b>{{ g.nome }}</b></td><td>{{ g.usuarios|length }}</td><td>{{ g.zona_label }}</td><td>{{ g.dispositivos|length }}/{{ total }}</td>
+        <td><a class="linkbtn" href="{{ url_for('grupo_form', gid=g.id) }}">Editar</a> · {{ post_btn(url_for('grupo_excluir', gid=g.id), 'Excluir', 'Excluir o grupo ' ~ g.nome ~ '?', 'linkbtn danger') }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

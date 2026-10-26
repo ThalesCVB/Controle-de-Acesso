@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import webcam_js, nomes_js, visitantes_anteriores_js with context %}
+{% block content %}
+<div class="toolbar"><a class="btn secondary" href="{{ url_for('visitantes') }}">← Voltar para visitantes</a></div>
+<form method="post">
+<input type="hidden" name="_csrf" value="{{ csrf }}">
+<input type="hidden" name="foto_data" id="fotoData">
+<div class="form-wrap">
+  <div class="cam-box">
+    <div class="cam-frame" id="camFrame">
+      <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+      <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+    </div>
+    <div class="cam-hint" id="camHint">Capture a foto do visitante.</div>
+    <button type="button" class="btn" id="camBtn" style="width:100%;justify-content:center">Ativar câmera</button>
+  </div>
+  <div>
+    <div class="panel">
+      <div class="panel-head"><h3>Dados da visita</h3></div>
+      <div class="field-grid">
+        <div class="field"><label>Nome completo</label><input name="nome" required value="{{ form.get('nome', '') }}"></div>
+        <div class="field"><label>Documento</label><input name="documento" required value="{{ form.get('documento', '') }}" placeholder="RG / CPF"></div>
+        <div class="field full"><label>Anfitrião</label>
+          <select name="anfitriao_id" required>
+            {% for a in anfitrioes %}<option value="{{ a.id }}" {{ 'selected' if form.get('anfitriao_id')|string == a.id|string }}>{{ a.nome }} — {{ a.grupo.nome }}</option>{% endfor %}
+          </select></div>
+        <div class="field"><label>Válido de</label><input type="datetime-local" name="valido_de" required value="{{ form.get('valido_de', '') }}"></div>
+        <div class="field"><label>Válido até</label><input type="datetime-local" name="valido_ate" required value="{{ form.get('valido_ate', '') }}"></div>
+      </div>
+      <div class="field-hint">A credencial é enviada a todas as catracas e expira ao fim do período.</div>
+    </div>
+    <footer class="form-actions">
+      <a class="btn secondary" href="{{ url_for('visitantes') }}">Cancelar</a>
+      <button class="btn">Cadastrar e sincronizar</button>
+    </footer>
+  </div>
+</div>
+</form>
+{% endblock %}
+{% block scripts %}{{ webcam_js() }}{{ nomes_js() }}{{ visitantes_anteriores_js() }}{% endblock %}

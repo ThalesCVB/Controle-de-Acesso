@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="toolbar"><a class="btn secondary" href="{{ url_for('dispositivos') }}">← Voltar</a></div>
+<form method="post" class="panel" style="max-width:720px">
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <div class="field-grid">
+    <div class="field"><label>Nome</label><input name="nome" required value="{{ form.get('nome', '') }}"></div>
+    <div class="field"><label>Modelo</label><select name="modelo"><option>SS 3532 MF</option><option>SS 3532 MF W</option></select></div>
+    <div class="field"><label>IP</label><input name="ip" required value="{{ form.get('ip', '') }}" placeholder="192.168.10.18"></div>
+    <div class="field"><label>Local</label><input name="local" value="{{ form.get('local', '') }}"></div>
+    <div class="field"><label>Usuário da API</label><input name="usuario_api" value="{{ form.get('usuario_api', 'admin') }}"></div>
+    <div class="field"><label>Senha da API</label><input name="senha_api" type="password" autocomplete="new-password"></div>
+  </div>
+  <footer class="form-actions"><button class="btn">Adicionar</button></footer>
+</form>
+{% endblock %}

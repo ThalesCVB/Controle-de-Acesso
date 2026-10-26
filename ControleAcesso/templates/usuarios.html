@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import iniciais, busca, post_btn with context %}
+{% block content %}
+<div class="toolbar">
+  {{ busca('Buscar usuário por nome ou CPF...', q) }}
+  <a class="btn" href="{{ url_for('usuario_form') }}">+ Novo usuário</a>
+</div>
+<div class="panel" style="margin-bottom:0">
+  <table>
+    <thead><tr><th>Nome</th><th>Grupo</th><th>Cargo</th><th>Credenciais</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      {% for u in lista %}
+      <tr>
+        <td><div class="row-user">{% if u.foto %}<img class="ph" src="{{ url_for('foto', nome=u.foto) }}" alt="">{% else %}<div class="ph">{{ iniciais(u.nome) }}</div>{% endif %}{{ u.nome }}</div></td>
+        <td>{{ u.grupo.nome }}</td><td>{{ u.cargo }}</td>
+        <td>{% if u.foto %}Facial{% else %}<span class="sync-badge pend">Aguardando foto</span>{% endif %}</td>
+        <td><span class="pill {{ u.status }}">{{ u.status|capitalize }}</span></td>
+        <td><a class="linkbtn" href="{{ url_for('usuario_form', uid=u.id) }}">Editar</a>
+          {% if op.eh_ti %} · {{ post_btn(url_for('usuario_excluir', uid=u.id), 'Excluir', 'Excluir ' ~ u.nome ~ '?', 'linkbtn danger') }}{% endif %}</td>
+      </tr>
+      {% else %}<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:24px">Nenhum usuário encontrado.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import iniciais, tag with context %}
+{% block content %}
+<div class="toolbar">
+  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="fBusca" placeholder="Buscar por nome, dispositivo..."></div>
+  <select id="fDisp" style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:var(--panel)">
+    <option value="">Todos os dispositivos</option>
+    {% for d in dispositivos %}<option>{{ d.nome }}</option>{% endfor %}
+  </select>
+  {% if mock %}<button class="btn secondary" id="simBtn" type="button">Simular acesso</button>{% endif %}
+</div>
+<div class="panel" style="margin-bottom:0">
+  <table>
+    <thead><tr><th>Pessoa</th><th>Tipo</th><th>Dispositivo</th><th>Sentido</th><th>Resultado</th><th>Horário</th></tr></thead>
+    <tbody id="tbody">
+      {% for e in eventos %}
+      <tr data-id="{{ e.id }}">
+        <td><div class="row-user"><div class="ph">{{ iniciais(e.pessoa_nome) }}</div>{{ e.pessoa_nome }}</div></td>
+        <td>{{ e.tipo_label }}</td><td>{{ e.dispositivo.nome }}</td><td>{{ e.sentido }}</td>
+        <td>{{ tag(e.permitido) }}{% if e.motivo and not e.permitido %}<div class="evt-motivo">{{ e.motivo }}</div>{% endif %}</td>
+        <td>{{ e.quando.strftime('%d/%m %H:%M:%S') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const tbody = document.getElementById('tbody');
+let ultimo = Math.max(0, ...[...tbody.rows].map(r => +r.dataset.id));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ini = n => n.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+function linha(e) {
+  const tr = document.createElement('tr'); tr.dataset.id = e.id;
+  tr.innerHTML = `<td><div class="row-user"><div class="ph">${esc(ini(e.nome))}</div>${esc(e.nome)}</div></td>
+    <td>${esc(e.tipo)}</td><td>${esc(e.dispositivo)}</td><td>${esc(e.sentido)}</td>
+    <td><span class="evt-tag ${e.ok ? 'ok' : 'no'}">${e.ok ? 'Permitido' : 'Negado'}</span>${e.motivo && !e.ok ? '<div class="evt-motivo">' + esc(e.motivo) + '</div>' : ''}</td>
+    <td>${esc(e.hora)}</td>`;
+  return tr;
+}
+async function poll() {
+  try {
+    const r = await fetch('{{ url_for("api_eventos") }}?depois=' + ultimo);
+    if (r.ok) for (const e of await r.json()) { tbody.insertBefore(linha(e), tbody.firstChild); ultimo = Math.max(ultimo, e.id); }
+    while (tbody.rows.length > 200) tbody.deleteRow(-1);
+    filtrar();
+  } catch (_) {}
+}
+function filtrar() {
+  const q = document.getElementById('fBusca').value.toLowerCase(), d = document.getElementById('fDisp').value;
+  for (const tr of tbody.rows) {
+    const t = tr.textContent.toLowerCase();
+    tr.style.display = (!q || t.includes(q)) && (!d || tr.cells[2].textContent === d) ? '' : 'none';
+  }
+}
+document.getElementById('fBusca').addEventListener('input', filtrar);
+document.getElementById('fDisp').addEventListener('change', filtrar);
+setInterval(poll, 3000);
+const sim = document.getElementById('simBtn');
+if (sim) sim.addEventListener('click', async () => {
+  await fetch('{{ url_for("api_simular") }}', {method: 'POST', headers: {'X-CSRF': '{{ csrf }}'}}); poll();
+});
+</script>
+{% endblock %}

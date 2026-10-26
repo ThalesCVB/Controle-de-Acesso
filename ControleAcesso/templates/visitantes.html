@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import iniciais, busca, post_btn with context %}
+{% block content %}
+<div class="toolbar">
+  {{ busca('Buscar visitante...', q) }}
+  <a class="btn" href="{{ url_for('visitante_novo') }}">+ Novo visitante</a>
+</div>
+<div class="panel" style="margin-bottom:0">
+  <table>
+    <thead><tr><th>Visitante</th><th>Documento</th><th>Anfitrião</th><th>Válido até</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      {% for v in lista %}
+      <tr>
+        <td><div class="row-user">{% if v.foto %}<img class="ph" src="{{ url_for('foto', nome=v.foto) }}" alt="">{% else %}<div class="ph">{{ iniciais(v.nome) }}</div>{% endif %}{{ v.nome }}</div></td>
+        <td>{{ v.documento }}</td><td>{{ v.anfitriao.nome }}</td><td>{{ v.valido_ate.strftime('%d/%m %H:%M') }}</td>
+        <td><span class="pill {{ v.situacao }}">{{ {'em_visita': 'Em visita', 'agendado': 'Agendado', 'encerrado': 'Encerrado'}[v.situacao] }}</span></td>
+        <td>{% if v.situacao != 'encerrado' %}{{ post_btn(url_for('visitante_encerrar', vid=v.id), 'Encerrar visita', 'Encerrar a visita de ' ~ v.nome ~ '?') }}{% endif %}</td>
+      </tr>
+      {% else %}<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:24px">Nenhum visitante.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

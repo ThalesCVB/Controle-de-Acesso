@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% set f = form if form else {} %}
+{% block content %}
+<div class="toolbar"><a class="btn secondary" href="{{ url_for('grupos') }}">← Voltar para grupos</a></div>
+<form method="post">
+<input type="hidden" name="_csrf" value="{{ csrf }}">
+<div class="panel" style="max-width:720px">
+  <div class="field"><label>Nome do grupo</label><input name="nome" required value="{{ f.get('nome', gr.nome if gr else '') }}"></div>
+  {% set h24 = (f.get('acesso_24h') == '1') if f else (gr.acesso_24h if gr else False) %}
+  <div class="field"><label class="checks"><span style="display:flex;gap:6px;align-items:center;font-weight:600"><input type="checkbox" name="acesso_24h" value="1" id="h24" {{ 'checked' if h24 }} style="width:auto"> Acesso 24 horas</span></label></div>
+  <div id="janela">
+    <div class="field-grid">
+      <div class="field"><label>Início</label><input type="time" name="hora_inicio" value="{{ f.get('hora_inicio', gr.hora_inicio if gr else '07:00') }}"></div>
+      <div class="field"><label>Fim</label><input type="time" name="hora_fim" value="{{ f.get('hora_fim', gr.hora_fim if gr else '19:00') }}"></div>
+    </div>
+    {% set dsel = f.getlist('dias') if form and f.getlist is defined else (gr.dias.split(',') if gr else ['0','1','2','3','4']) %}
+    <div class="field"><label>Dias da semana</label>
+      <div class="checks">{% for n, nome in DIAS %}<label><input type="checkbox" name="dias" value="{{ n }}" {{ 'checked' if n in dsel }}>{{ nome }}</label>{% endfor %}</div></div>
+  </div>
+  {% set dis_sel = f.getlist('dispositivos')|map('int')|list if form and f.getlist is defined else (gr.dispositivos|map(attribute='id')|list if gr else dispositivos|map(attribute='id')|list) %}
+  <div class="field"><label>Catracas liberadas</label>
+    <div class="checks">{% for d in dispositivos %}<label><input type="checkbox" name="dispositivos" value="{{ d.id }}" {{ 'checked' if d.id in dis_sel }}>{{ d.nome }}</label>{% endfor %}</div></div>
+  <footer class="form-actions"><a class="btn secondary" href="{{ url_for('grupos') }}">Cancelar</a><button class="btn">Salvar</button></footer>
+</div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+const h = document.getElementById('h24'), j = document.getElementById('janela');
+const sync = () => j.style.display = h.checked ? 'none' : 'block';
+h.addEventListener('change', sync); sync();
+</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="toolbar">
+  <form method="post" action="{{ url_for('dispositivos_sincronizar') }}"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="btn secondary">Sincronizar agora</button></form>
+  <a class="btn secondary" href="{{ url_for('dispositivo_novo') }}">+ Adicionar catraca</a>
+</div>
+<div class="panel">
+  <table>
+    <thead><tr><th>Dispositivo</th><th>Modelo</th><th>IP</th><th>Local</th><th>Fila de sincronização</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for d in lista %}
+      <tr><td><b>{{ d.nome }}</b></td><td>{{ d.modelo }}</td><td>{{ d.ip }}</td><td>{{ d.local }}</td>
+        <td>{% if fila.get(d.id) %}<span class="sync-badge pend">{{ fila[d.id] }} pendente(s)</span>{% else %}<span class="sync-badge ok">Sincronizado</span>{% endif %}</td>
+        <td><span class="dot {{ 'on' if d.online else 'off' }}" style="display:inline-block;margin-right:6px"></span>{{ 'Online' if d.online else 'Offline' }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if erros %}
+<div class="panel" style="margin-bottom:0">
+  <div class="panel-head"><h3>Últimas falhas de envio</h3></div>
+  {% for j in erros %}<div class="field-hint">{{ j.created_at.strftime('%d/%m %H:%M') }} · {{ j.dispositivo.nome }} · {{ j.erro }} ({{ j.tentativas }} tentativa(s))</div>{% endfor %}
+</div>
+{% endif %}
+{% endblock %}

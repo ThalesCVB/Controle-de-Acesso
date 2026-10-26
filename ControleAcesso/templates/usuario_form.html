@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import webcam_js, nomes_js with context %}
+{% set v = form if form else {} %}
+{% block content %}
+<div class="toolbar"><a class="btn secondary" href="{{ url_for('usuarios') }}">← Voltar para usuários</a></div>
+<form method="post">
+<input type="hidden" name="_csrf" value="{{ csrf }}">
+<input type="hidden" name="foto_data" id="fotoData">
+<div class="form-wrap">
+  <div class="cam-box">
+    <div class="cam-frame" id="camFrame">
+      {% if u and u.foto %}<img src="{{ url_for('foto', nome=u.foto) }}" alt="">
+      {% else %}<svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>{% endif %}
+      <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+    </div>
+    <div class="cam-hint" id="camHint">Posicione o rosto dentro da moldura e capture a foto de cadastro.</div>
+    <button type="button" class="btn" id="camBtn" style="width:100%;justify-content:center">{{ 'Refazer foto' if u and u.foto else 'Ativar câmera' }}</button>
+  </div>
+  <div>
+    <div class="panel">
+      <div class="panel-head"><h3>Dados do usuário</h3></div>
+      <div class="field-grid">
+        <div class="field"><label>Nome completo</label><input name="nome" required value="{{ v.get('nome', u.nome if u else '') }}" placeholder="Ex: Maria Aparecida Souza"></div>
+        <div class="field"><label>CPF</label><input name="cpf" required value="{{ v.get('cpf', formatar_cpf(u.cpf) if u else '') }}" placeholder="000.000.000-00"></div>
+        <div class="field"><label>Cargo / Função</label><input name="cargo" value="{{ v.get('cargo', u.cargo if u else '') }}" placeholder="Ex: Enfermeira voluntária"></div>
+        <div class="field"><label>Grupo</label>
+          <select name="grupo_id" required>
+            {% set gsel = (v.get('grupo_id') | int) if v.get('grupo_id') else (u.grupo_id if u else 0) %}
+            {% for g in grupos %}<option value="{{ g.id }}" {{ 'selected' if g.id == gsel }}>{{ g.nome }}</option>{% endfor %}
+          </select></div>
+        {% if u %}
+        <div class="field"><label>Status</label>
+          <select name="status">{% for s in ['ativo','inativo','bloqueado'] %}<option value="{{ s }}" {{ 'selected' if s == (v.get('status') or u.status) }}>{{ s|capitalize }}</option>{% endfor %}</select>
+          <div class="field-hint">Inativo/bloqueado remove a credencial das catracas.</div></div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Credenciais de acesso</h3></div>
+      <div class="cred-row"><div class="l">Reconhecimento facial</div>
+        {% if u and u.foto %}<span class="sync-badge ok">Foto cadastrada</span>{% else %}<span class="sync-badge pend">Aguardando foto</span>{% endif %}</div>
+      <div class="field-hint">A foto é enviada automaticamente às catracas liberadas para o grupo. O status de sincronização aparece em Dispositivos.</div>
+    </div>
+    <footer class="form-actions">
+      <a class="btn secondary" href="{{ url_for('usuarios') }}">Cancelar</a>
+      <button class="btn">Salvar e sincronizar</button>
+    </footer>
+  </div>
+</div>
+</form>
+{% endblock %}
+{% block scripts %}{{ webcam_js() }}{{ nomes_js(u.id if u else 0) }}{% endblock %}

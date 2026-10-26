@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="panel" style="max-width:460px">
+  <div class="panel-head"><h3>Defina uma nova senha</h3></div>
+  <form method="post">
+    <input type="hidden" name="_csrf" value="{{ csrf }}">
+    <div class="field"><label>Senha atual</label><input name="atual" type="password" required></div>
+    <div class="field"><label>Nova senha</label><input name="nova" type="password" required>
+      <div class="field-hint">Mínimo 8 caracteres, com maiúscula, minúscula e número.</div></div>
+    <div class="field"><label>Confirmar nova senha</label><input name="conf" type="password" required></div>
+    <button class="btn">Salvar</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import post_btn with context %}
+{% block content %}
+<div class="grid-2">
+  <div class="panel">
+    <table>
+      <thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for o in lista %}
+        <tr><td>{{ o.nome }}</td><td>{{ o.login }}</td><td>{{ 'TI' if o.eh_ti else 'Portaria' }}</td>
+          <td><span class="pill {{ 'ativo' if o.ativo else 'inativo' }}">{{ 'Ativo' if o.ativo else 'Inativo' }}</span></td>
+          <td>{% if o.id != op.id %}{{ post_btn(url_for('operador_ativo', oid=o.id), 'Desativar' if o.ativo else 'Ativar') }}{% endif %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <form method="post" class="panel">
+    <div class="panel-head"><h3>Novo operador</h3></div>
+    <input type="hidden" name="_csrf" value="{{ csrf }}">
+    <div class="field"><label>Nome</label><input name="nome" required></div>
+    <div class="field"><label>Login</label><input name="login" required></div>
+    <div class="field"><label>Perfil</label><select name="perfil"><option value="portaria">Portaria</option><option value="ti">TI</option></select></div>
+    <div class="field"><label>Senha provisória</label><input name="senha" type="password" required autocomplete="new-password">
+      <div class="field-hint">Será trocada no primeiro acesso.</div></div>
+    <button class="btn">Criar</button>
+  </form>
+</div>
+{% endblock %}

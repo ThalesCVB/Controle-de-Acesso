@@ -1,0 +1,9 @@
+Flask==3.1.3
+Flask-SQLAlchemy==3.1.1
+SQLAlchemy==2.0.51
+Werkzeug==3.1.8
+pyodbc>=5.1          # só necessário com SQL Server (DATABASE_URL=mssql+pyodbc://...)
+reportlab>=4.0       # exportação de PDF dos relatórios
+waitress>=3.0        # WSGI de produção no Windows
+requests>=2.31      # driver Intelbras (HTTP Digest)
+pillow>=10.0        # converte a foto pro limite da catraca (JPEG ≤100KB)

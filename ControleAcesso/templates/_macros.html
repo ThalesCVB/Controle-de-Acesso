@@ -1,0 +1,117 @@
+{% macro iniciais(nome) %}{% set p = nome.split() %}{{ ((p[0][:1] ~ (p[1][:1] if p|length > 1 else ''))|upper) if p else '?' }}{% endmacro %}
+
+{% macro tag(ok) %}<span class="evt-tag {{ 'ok' if ok else 'no' }}">{{ 'Permitido' if ok else 'Negado' }}</span>{% endmacro %}
+
+{% macro evt_linha(e) %}
+<div class="evt">
+  <div class="evt-avatar">{{ iniciais(e.pessoa_nome) }}</div>
+  <div class="evt-body">
+    <div class="n">{{ e.pessoa_nome }}</div>
+    <div class="m">{{ e.dispositivo.nome }} · {{ e.sentido }} · {{ e.quando.strftime('%H:%M') }}{% if e.motivo and not e.permitido %} · {{ e.motivo }}{% endif %}</div>
+  </div>
+  {{ tag(e.permitido) }}
+</div>
+{% endmacro %}
+
+{% macro busca(placeholder, q) %}
+<form class="search" method="get">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+  <input name="q" value="{{ q or '' }}" placeholder="{{ placeholder }}">
+</form>
+{% endmacro %}
+
+{% macro post_btn(url, label, confirm=None, cls='linkbtn') %}
+<form class="inline" method="post" action="{{ url }}" {% if confirm %}onsubmit="return confirm('{{ confirm }}')"{% endif %}>
+  <input type="hidden" name="_csrf" value="{{ csrf }}"><button class="{{ cls }}">{{ label }}</button>
+</form>
+{% endmacro %}
+
+{# webcam: precisa de #camFrame, #camHint, #camBtn e <input type=hidden name=foto_data id=fotoData> #}
+{% macro webcam_js() %}
+<script>
+let stream = null;
+const camBtn = document.getElementById('camBtn'), camFrame = document.getElementById('camFrame'),
+      camHint = document.getElementById('camHint'), fotoData = document.getElementById('fotoData');
+const corners = '<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>';
+camBtn.addEventListener('click', async () => {
+  if (!stream) {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({video: true});
+      camFrame.innerHTML = '<video autoplay playsinline></video>' + corners;
+      camFrame.querySelector('video').srcObject = stream;
+      camBtn.textContent = 'Capturar foto';
+      camHint.textContent = 'Câmera ativa. Centralize o rosto e capture.';
+    } catch (err) {
+      camHint.textContent = 'Não foi possível acessar a câmera. Verifique as permissões do navegador.';
+    }
+  } else {
+    const video = camFrame.querySelector('video');
+    const c = document.createElement('canvas');
+    c.width = video.videoWidth; c.height = video.videoHeight;
+    c.getContext('2d').drawImage(video, 0, 0);
+    const url = c.toDataURL('image/jpeg', 0.92);
+    stream.getTracks().forEach(t => t.stop()); stream = null;
+    camFrame.innerHTML = '<img src="' + url + '">' + corners;
+    fotoData.value = url;
+    camBtn.textContent = 'Refazer foto';
+    camHint.textContent = 'Foto capturada. Ao salvar, ela será sincronizada com as catracas.';
+  }
+});
+</script>
+{% endmacro %}
+
+{% macro nomes_js(ignorar=0) %}
+<script>
+(function(){
+  var nome=document.querySelector('input[name=nome]'), doc=document.querySelector('input[name=documento]')||document.querySelector('input[name=cpf]');
+  if(!nome) return;
+  var box=document.createElement('div'); box.className='field-hint'; box.style.cssText='color:#b45309;display:none;margin-top:6px';
+  nome.parentNode.appendChild(box); var t;
+  function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+  function checar(){
+    clearTimeout(t); t=setTimeout(function(){
+      var n=nome.value.trim(); if(n.split(/\s+/).length<2 && !(doc&&doc.value.trim())){box.style.display='none';return;}
+      fetch('{{ url_for("api_nomes_parecidos") }}?ignorar={{ ignorar }}&nome='+encodeURIComponent(n)+'&documento='+encodeURIComponent(doc?doc.value:''),{credentials:'same-origin'})
+        .then(function(r){return r.ok?r.json():[]}).then(function(l){
+          if(!l.length){box.style.display='none';return;}
+          box.innerHTML='⚠ Já existe cadastro parecido: '+l.map(function(p){return '<b>'+esc(p.nome)+'</b> ('+esc(p.tipo)+(p.documento?' · '+esc(p.documento):'')+')';}).join('; ')+'. Confira antes de salvar.';
+          box.style.display='block';
+        }).catch(function(){});
+    },400);
+  }
+  nome.addEventListener('input',checar); nome.addEventListener('blur',checar);
+  if(doc){doc.addEventListener('input',checar);}
+})();
+</script>
+{% endmacro %}
+
+{% macro visitantes_anteriores_js() %}
+<script>
+(function(){
+  var nome=document.querySelector('input[name=nome]'), doc=document.querySelector('input[name=documento]');
+  if(!nome||!doc) return;
+  var lista=document.createElement('div');
+  lista.style.cssText='display:none;border:1px solid var(--line,#ddd);border-radius:8px;margin-top:6px;background:var(--surface,#fff);overflow:hidden';
+  nome.parentNode.appendChild(lista); var t;
+  function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+  function buscar(campo){
+    clearTimeout(t); t=setTimeout(function(){
+      fetch('{{ url_for("api_visitantes_anteriores") }}?q='+encodeURIComponent(campo.value.trim()),{credentials:'same-origin'})
+        .then(function(r){return r.ok?r.json():[]}).then(function(l){
+          if(!l.length){lista.style.display='none';return;}
+          lista.innerHTML='<div class="field-hint" style="padding:6px 10px">Já visitou antes — clique para preencher:</div>'+l.map(function(p,i){
+            return '<button type="button" data-i="'+i+'" style="display:block;width:100%;text-align:left;padding:8px 10px;border:0;border-top:1px solid var(--line,#eee);background:none;cursor:pointer;font:inherit;color:inherit"><b>'+esc(p.nome)+'</b> · '+esc(p.documento)+'</button>';
+          }).join('');
+          lista.style.display='block';
+          lista.querySelectorAll('button').forEach(function(b){b.onclick=function(){
+            var p=l[b.dataset.i]; nome.value=p.nome; doc.value=p.documento; lista.style.display='none'; nome.dispatchEvent(new Event('input'));
+          };});
+        }).catch(function(){});
+    },300);
+  }
+  nome.addEventListener('input',function(){buscar(nome)});
+  doc.addEventListener('input',function(){buscar(doc)});
+  document.addEventListener('click',function(e){if(!lista.contains(e.target)&&e.target!==nome&&e.target!==doc)lista.style.display='none';});
+})();
+</script>
+{% endmacro %}
